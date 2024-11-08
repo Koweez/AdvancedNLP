@@ -3,3 +3,24 @@ extension/dist
 extension/node_modules
 extension/.vscode-test/
 *.vsix
+
+
+# Dependency directories
+node_modules/
+
+# Build output
+out/
+dist/
+
+# Python cache
+__pycache__/
+
+# VSCode test and extension package files
+.vscode-test/
+*.vsix
+
+# Environment files (optional, if used)
+.env
+
+# Logs and temporary files
+*.log
