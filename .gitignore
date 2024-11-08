@@ -2,6 +2,10 @@ extension/out
 extension/dist
 extension/node_modules
 extension/.vscode-test/
+extension/.vscode/
+extension/.vscode-test.mjs
+extension/.vscodeignore
+extension/package-lock.json
 *.vsix
 
 
