@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from utils import PromptRequest, predict
+from utils import PromptRequest, CompletionRequest, predict, autocomplete
 
 app = FastAPI()
 
@@ -11,6 +11,14 @@ async def root():
 async def get_prediction(request: PromptRequest):
     try:
         response = predict(request.prompt, request.context)
+        return {"answer": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
+    
+@app.post("/autocomplete")
+async def get_autocomplete(request: CompletionRequest):
+    try:
+        response = autocomplete(request.context)
         return {"answer": response}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
