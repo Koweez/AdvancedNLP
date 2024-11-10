@@ -7,7 +7,7 @@ app = FastAPI()
 async def root():
     return {"message": "Welcome to the code assistant server!"}
 
-@app.post("/predict")
+@app.post("/prompt")
 async def get_prediction(request: PromptRequest):
     try:
         response = predict(request.prompt, request.context)
@@ -19,7 +19,7 @@ async def get_prediction(request: PromptRequest):
 async def get_autocomplete(request: CompletionRequest):
     try:
         response = autocomplete(request.context)
-        return {"answer": response}
+        return {"completion": response}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
 

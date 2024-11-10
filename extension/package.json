@@ -9,17 +9,28 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:codebuddy.promptUser",
+    "onCommand:codebuddy.sendPageContent"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "helloworld.helloWorld",
-        "title": "Hello World"
+        "command": "codebuddy.promptUser",
+        "title": "Ask CodeBuddy for Code Assistance"
       },
       {
-        "command": "code-assistant.promptUser",
-        "title": "Ask AI for Code Assistance"
+        "command": "codebuddy.sendPageContent",
+        "title": "Send Page Content to Auto-Complete"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "codebuddy.sendPageContent",
+        "key": "ctrl+alt+a",
+        "when": "editorTextFocus"
       }
     ]
   },
