@@ -10,9 +10,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:codebuddy.promptUser",
-    "onCommand:codebuddy.sendPageContent"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -20,17 +18,6 @@
       {
         "command": "codebuddy.promptUser",
         "title": "Ask CodeBuddy for Code Assistance"
-      },
-      {
-        "command": "codebuddy.sendPageContent",
-        "title": "Send Page Content to Auto-Complete"
-      }
-    ],
-    "keybindings": [
-      {
-        "command": "codebuddy.sendPageContent",
-        "key": "ctrl+alt+a",
-        "when": "editorTextFocus"
       }
     ]
   },

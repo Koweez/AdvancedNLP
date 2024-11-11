@@ -92,35 +92,8 @@ export function activate(vscodecontext: vscode.ExtensionContext) {
 		}
 	};
 
-	// const AutocompleteCommand = vscode.commands.registerCommand('codebuddy.sendPageContent', async () => {
-	// 	const editor = vscode.window.activeTextEditor;
-
-	// 	if (editor) {
-	// 		const documentContent = editor.document.getText();
-	// 		if (documentContent.trim() === '') {
-	// 			// vscode.window.showInformationMessage('The document is empty.');
-	// 			return;
-	// 		}
-
-	// 		try {
-	// 			const response = await axios.post('http://localhost:8000/autocomplete', {
-	// 				context: documentContent
-	// 			});
-
-	// 			editor.edit((editBuilder) => {
-	// 				editBuilder.insert(new vscode.Position(editor.document.lineCount, 0), response.data.completion);
-	// 			});
-	// 		}
-	// 		catch (error) {
-	// 			console.error('Error sending request to the server:', error);
-	// 			vscode.window.showErrorMessage('Failed to connect to the server. Please check your server and try again.');
-	// 		}
-	// 	}
-	// });
-
 	// Register the command in the context subscriptions
 	vscodecontext.subscriptions.push(promptUserCommand);
-	// vscodecontext.subscriptions.push(AutocompleteCommand);
 	vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, inlineCompletionProvider);
 
 }
