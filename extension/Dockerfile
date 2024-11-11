@@ -11,10 +11,10 @@ RUN curl -fsSL https://code-server.dev/install.sh | sh
 WORKDIR /extension
 
 # Copy your extension's source code into the container
-COPY helloworld-0.0.1.vsix ./helloworld-0.0.1.vsix
+COPY codebuddy-0.0.1.vsix ./codebuddy-0.0.1.vsix
 
 # Install the extension locally (from the source)
-RUN code-server --install-extension ./helloworld-0.0.1.vsix --force
+RUN code-server --install-extension ./codebuddy-0.0.1.vsix --force
 
 # Set the Python server URL as an environment variable
 ENV PYTHON_SERVER_URL=http://host.docker.internal:8000
