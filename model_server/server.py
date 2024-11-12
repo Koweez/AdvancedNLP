@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from utils import PromptRequest, CompletionRequest, predict, autocomplete
 
 app = FastAPI()
@@ -10,8 +11,7 @@ async def root():
 @app.post("/prompt")
 async def get_prediction(request: PromptRequest):
     try:
-        response = predict(request.prompt, request.context)
-        return {"answer": response}
+        return StreamingResponse(predict(request.prompt, request.context))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
     

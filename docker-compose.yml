@@ -1,5 +1,6 @@
 services:
   extension:
+    network_mode: "host"
     build: ./extension/
     ports:
       - "8080:8080"
