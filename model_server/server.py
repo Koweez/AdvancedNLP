@@ -11,7 +11,8 @@ async def root():
 @app.post("/prompt")
 async def get_prediction(request: PromptRequest):
     try:
-        return StreamingResponse(predict(request.prompt, request.context))
+        response = predict(request.prompt, request.context)
+        return {"answer": response}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
     

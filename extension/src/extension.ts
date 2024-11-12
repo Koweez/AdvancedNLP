@@ -1,6 +1,7 @@
 // Import the necessary modules
 import * as vscode from 'vscode';
 import axios from 'axios';
+import { read } from 'fs';
 
 // This method is called when your extension is activated
 export function activate(vscodecontext: vscode.ExtensionContext) {
@@ -41,10 +42,12 @@ export function activate(vscodecontext: vscode.ExtensionContext) {
 				}
 
 				try {
-					const response = await axios.post('http://localhost:8000/prompt', {
-						prompt: userPrompt,
-						context: documentContent
-					});
+					const response = await axios.post('http://localhost:8000/prompt',
+						{
+							prompt: userPrompt,
+							context: documentContent
+						}
+					);
 
 					panel.webview.postMessage({
 						command: 'showResponse',

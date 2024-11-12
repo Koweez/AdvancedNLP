@@ -17,9 +17,11 @@ def predict(prompt: str, context: str):
     url = 'http://localhost:11434/api/generate'
     body = {'model': model, 'prompt': prompt}
     resp = s.post(url, json=body, stream=True)
+    whole_response = ''
     for line in resp.iter_lines():
         if line:
-            yield json.loads(line.decode('utf-8'))['response']
+            whole_response += json.loads(line.decode('utf-8'))['response']
+    return whole_response
 
 
 def autocomplete(context: str):
