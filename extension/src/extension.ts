@@ -6,6 +6,7 @@ import { read } from 'fs';
 // This method is called when your extension is activated
 export function activate(vscodecontext: vscode.ExtensionContext) {
 	console.log('Extension "codebuddy" is now active!');
+	const outputChannel = vscode.window.createOutputChannel('CodeBuddy');
 
 	// Register a command that prompts the user for input
 	const promptUserCommand = vscode.commands.registerCommand('codebuddy.promptUser', async () => {
@@ -42,20 +43,31 @@ export function activate(vscodecontext: vscode.ExtensionContext) {
 				}
 
 				try {
-					const response = await axios.post('http://localhost:8000/prompt',
-						{
-							prompt: userPrompt,
-							context: documentContent
-						}
-					);
-
-					panel.webview.postMessage({
-						command: 'showResponse',
-						response: response.data.answer
+					// Using fetch for streaming response
+					const response = await fetch("http://localhost:8000/prompt", {
+						method: "POST",
+						body: JSON.stringify({ prompt: userPrompt, context: documentContent }),
+						headers: {
+							"Content-Type": "application/json",
+						},
 					});
-				}
-				catch (error) {
-					console.error('Error sending request to the server:', error);
+
+					if (!response.body) {
+						throw new Error("No response body");
+					}
+
+					let completeStr = '';
+					for await (const chunk of response.body) {
+						var string = new TextDecoder().decode(chunk);
+						completeStr += string;
+						panel.webview.postMessage({
+							command: 'showResponse',
+							response: completeStr
+						});
+					}
+
+				} catch (error) {
+					console.error('Error receiving streaming response:', error);
 					vscode.window.showErrorMessage('Failed to connect to the server. Please check your server and try again.');
 				}
 			}
@@ -99,6 +111,30 @@ export function activate(vscodecontext: vscode.ExtensionContext) {
 	vscodecontext.subscriptions.push(promptUserCommand);
 	vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, inlineCompletionProvider);
 
+}
+
+async function readData(url: string, prompt: string, docContext: string, panel: vscode.WebviewPanel) {
+	const response = await fetch(url, {
+		method: "POST",
+		body: JSON.stringify({ prompt: prompt, context: docContext }),
+		headers: {
+			"Content-Type": "application/json",
+		},
+	});
+
+	if (!response.body) {
+		throw new Error("No response body");
+	}
+
+	var completeStr = '';
+	for await (const chunk of response.body) {
+		var string = new TextDecoder().decode(chunk);
+		completeStr += string;
+		panel.webview.postMessage({
+			command: 'showResponse',
+			response: completeStr
+		});
+	}
 }
 
 function getWebviewContent(): string {
@@ -147,11 +183,12 @@ function getWebviewContent(): string {
                 });
 
                 window.addEventListener('message', event => {
-                    const message = event.data;
-                    if (message.command === 'showResponse') {
-                        document.getElementById('response').innerText = message.response;
-                    }
-                });
+					const message = event.data;
+					if (message.command === 'showResponse') {
+						const responseElement = document.getElementById('response');
+						responseElement.innerText = message.response;
+					}
+				});
             </script>
         </body>
         </html>
