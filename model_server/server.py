@@ -18,8 +18,7 @@ async def get_prediction(request: PromptRequest):
 @app.post("/autocomplete")
 async def get_autocomplete(request: CompletionRequest):
     try:
-        response = autocomplete(request.context)
-        return {"completion": response}
+        return StreamingResponse(autocomplete(request.context))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
 

@@ -6,7 +6,8 @@ import { read } from 'fs';
 // This method is called when your extension is activated
 export function activate(vscodecontext: vscode.ExtensionContext) {
 	console.log('Extension "codebuddy" is now active!');
-	const outputChannel = vscode.window.createOutputChannel('CodeBuddy');
+	let outputChannel = vscode.window.createOutputChannel('CodeBuddy');
+	outputChannel.appendLine('CodeBuddy extension activated hehehe boy');
 
 	// Register a command that prompts the user for input
 	const promptUserCommand = vscode.commands.registerCommand('codebuddy.promptUser', async () => {
@@ -82,13 +83,28 @@ export function activate(vscodecontext: vscode.ExtensionContext) {
 				const documentContent = document.getText();
 
 				try {
-					const response = await axios.post('http://localhost:8000/autocomplete', {
-						context: documentContent
+					outputChannel.appendLine('Fetching inline completion...');
+					const response = await fetch("http://localhost:8000/autocomplete", {
+						method: "POST",
+						body: JSON.stringify({ context: documentContent }),
+						headers: {
+							"Content-Type": "application/json",
+						},
 					});
 
-					const completionText = response.data.completion;
+					if (!response.body) {
+						throw new Error("No response body");
+					}
+
+					let completionText = '';
+					for await (const chunk of response.body) {
+						var string = new TextDecoder().decode(chunk);
+						outputChannel.appendLine('Chunk:' + string);
+						completionText += string;
+					}
 
 					if (completionText) {
+						outputChannel.appendLine('Completion response:' + completionText);
 						return {
 							items: [
 								{
@@ -111,30 +127,6 @@ export function activate(vscodecontext: vscode.ExtensionContext) {
 	vscodecontext.subscriptions.push(promptUserCommand);
 	vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, inlineCompletionProvider);
 
-}
-
-async function readData(url: string, prompt: string, docContext: string, panel: vscode.WebviewPanel) {
-	const response = await fetch(url, {
-		method: "POST",
-		body: JSON.stringify({ prompt: prompt, context: docContext }),
-		headers: {
-			"Content-Type": "application/json",
-		},
-	});
-
-	if (!response.body) {
-		throw new Error("No response body");
-	}
-
-	var completeStr = '';
-	for await (const chunk of response.body) {
-		var string = new TextDecoder().decode(chunk);
-		completeStr += string;
-		panel.webview.postMessage({
-			command: 'showResponse',
-			response: completeStr
-		});
-	}
 }
 
 function getWebviewContent(): string {
