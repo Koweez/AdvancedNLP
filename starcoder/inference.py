@@ -8,9 +8,9 @@ ACCESS_TOKEN = "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"
 checkpoint = "bigcode/starcoderbase-1b"
 device = "cuda" # for GPU usage or "cpu" for CPU usage
 
-tokenizer = AutoTokenizer.from_pretrained(checkpoint, token=ACCESS_TOKEN, cache_dir="tmp/")
+tokenizer = AutoTokenizer.from_pretrained(checkpoint, token=ACCESS_TOKEN, cache_dir="/tmp/starcoder")
 tokenizer.pad_token = tokenizer.eos_token
-model = AutoModelForCausalLM.from_pretrained(checkpoint, token=ACCESS_TOKEN, cache_dir="tmp/")
+model = AutoModelForCausalLM.from_pretrained(checkpoint, token=ACCESS_TOKEN, cache_dir="/tmp/starcoder")
 model.generation_config.pad_token_id = tokenizer.eos_token_id
 
 def postprocess_output(prediction):
@@ -30,17 +30,3 @@ def fill_in(before_cursor: str, after_cursor: str, device: Optional[str | torch.
     outputs = model.generate(input_ids=input_ids, attention_mask=attention_mask, max_new_tokens=20)
     pred = tokenizer.decode(outputs[0])
     return postprocess_output(pred)
-
-# postprocess to get only the generated code between the 
-before_cursor = "def add(a, b):\n"
-after_cursor = "return res\n"
-
-completion = autocomplete(before_cursor, after_cursor, "cpu")
-print('-------------')
-print(completion)
-
-def is_even(n):
-    if n % 2 == 0:
-        return True
-    else:
-        return False

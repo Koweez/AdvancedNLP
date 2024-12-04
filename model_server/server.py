@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
-from utils import PromptRequest, CompletionRequest, predict, autocomplete
+from model_server.utils import PromptRequest, CompletionRequest, predict, autocomplete
 
 app = FastAPI()
 
