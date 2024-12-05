@@ -16,6 +16,8 @@ def postprocess_output(prediction):
     return txt
 
 def fill_in(before_cursor: str, after_cursor: str, device: Optional[str | torch.device] = "cpu") -> str:
+    global model
+    model.to(device)
     input_text = f"<fim_prefix>{before_cursor}<fim_suffix>{after_cursor}<fim_middle>"
     inputs = tokenizer(input_text, return_tensors="pt", padding=True, return_attention_mask=True)
     

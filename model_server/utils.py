@@ -35,4 +35,4 @@ def autocomplete(before_cursor: str, after_cursor: str):
     # for line in resp.iter_lines():
     #     if line:
     #         yield json.loads(line.decode('utf-8'))['response']
-    return fill_in(before_cursor, after_cursor, "cpu")
+    return fill_in(before_cursor, after_cursor)
