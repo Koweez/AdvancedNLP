@@ -1,13 +1,13 @@
-// Import the necessary modules
-import * as vscode from 'vscode';
-import axios from 'axios';
-import { read } from 'fs';
+const vscode = require('vscode');
+const MarkdownIt = require('markdown-it');
+const hljs = require('highlight.js');
+const fs = require('fs');
 
-// This method is called when your extension is activated
-export function activate(vscodecontext: vscode.ExtensionContext) {
+
+function activate(vscodecontext) {
 	console.log('Extension "codebuddy" is now active!');
 	let outputChannel = vscode.window.createOutputChannel('CodeBuddy');
-	outputChannel.appendLine('CodeBuddy extension activated hehehe boy');
+	outputChannel.appendLine('Code Buddy extension activated hehehe boy');
 
 	// Register a command that prompts the user for input
 	const promptUserCommand = vscode.commands.registerCommand('codebuddy.promptUser', async () => {
@@ -20,12 +20,12 @@ export function activate(vscodecontext: vscode.ExtensionContext) {
 			'Code Buddy',
 			vscode.ViewColumn.Two,
 			{
-				enableScripts: true
+				enableScripts: true,
+				retainContextWhenHidden: false
 			},
 		);
 
-
-		panel.webview.html = getWebviewContent();
+		panel.webview.html = getWebviewContent(panel.webview, vscodecontext.extensionUri);
 
 		panel.webview.onDidReceiveMessage(async (message) => {
 			await vscode.commands.executeCommand('workbench.action.focusFirstEditorGroup');
@@ -44,7 +44,6 @@ export function activate(vscodecontext: vscode.ExtensionContext) {
 				}
 
 				try {
-					// Using fetch for streaming response
 					const response = await fetch("http://localhost:8000/prompt", {
 						method: "POST",
 						body: JSON.stringify({ prompt: userPrompt, context: documentContent }),
@@ -57,13 +56,12 @@ export function activate(vscodecontext: vscode.ExtensionContext) {
 						throw new Error("No response body");
 					}
 
-					let completeStr = '';
+					let content = '';
 					for await (const chunk of response.body) {
-						var string = new TextDecoder().decode(chunk);
-						completeStr += string;
+						content += new TextDecoder().decode(chunk);
 						panel.webview.postMessage({
 							command: 'showResponse',
-							response: completeStr
+							response: renderMarkdown(content)
 						});
 					}
 
@@ -76,7 +74,7 @@ export function activate(vscodecontext: vscode.ExtensionContext) {
 
 	});
 
-	const inlineCompletionProvider: vscode.InlineCompletionItemProvider = {
+	const inlineCompletionProvider = {
 		async provideInlineCompletionItems(document, position, context, token) {
 			// Only send context when the user is actively typing
 			if (context.triggerKind === vscode.InlineCompletionTriggerKind.Automatic) {
@@ -129,65 +127,45 @@ export function activate(vscodecontext: vscode.ExtensionContext) {
 
 }
 
-function getWebviewContent(): string {
-	return `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>CodeBuddy Assistant</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    padding: 10px;
+function renderMarkdown(markdown) {
+    const md = new MarkdownIt({
+        html: true,          // Allow HTML tags in Markdown
+        linkify: true,       // Convert links to clickable URLs
+        typographer: true,   // Enable typographic features
+        
+        highlight: function (str, lang) {
+            if (lang && hljs.getLanguage(lang)) {
+                try {
+                    return `<pre class="hljs language-${lang}"><code class="language-${lang}">${
+                        hljs.highlight(str, { language: lang, ignoreIllegals: true }).value
+                    }</code></pre>`;
+                } catch (__) {
+                    return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`;
                 }
-                textarea {
-                    width: 100%;
-                    height: 100px;
-                }
-                button {
-                    margin-top: 10px;
-                    padding: 5px 10px;
-                    cursor: pointer;
-                }
-                .response {
-                    margin-top: 20px;
-                    white-space: pre-wrap;
-                    border-top: 1px solid #ddd;
-                    padding-top: 10px;
-                }
-            </style>
-        </head>
-        <body>
-            <h2>CodeBuddy Assistant</h2>
-            <textarea id="input" placeholder="Type your query here..."></textarea>
-            <button id="submit">Submit</button>
-            <div class="response" id="response"></div>
-            <script>
-                const vscode = acquireVsCodeApi();
-                document.getElementById('submit').addEventListener('click', () => {
-                    const input = document.getElementById('input').value;
-                    vscode.postMessage({
-                        command: 'submitPrompt',
-                        text: input
-                    });
-                });
+            }
 
-                window.addEventListener('message', event => {
-					const message = event.data;
-					if (message.command === 'showResponse') {
-						const responseElement = document.getElementById('response');
-						responseElement.innerText = message.response;
-					}
-				});
-            </script>
-        </body>
-        </html>
-    `;
+            return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`;
+        }
+    });
+
+    return md.render(markdown);
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {
+function getWebviewContent(webview, extensionUri) {
+    const htmlPath = vscode.Uri.joinPath(extensionUri, 'media', 'webview.html');
+    let html = fs.readFileSync(htmlPath.fsPath, 'utf8');
+
+    const cssPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'webview.css'));
+    html = html.replace('<link rel="stylesheet" href="webview.css">', `<link rel="stylesheet" href="${cssPath}">`);
+
+    return html;
+}
+
+function deactivate() {
 	console.log('Deactivated');
 }
+
+module.exports = {
+	activate,
+	deactivate
+};

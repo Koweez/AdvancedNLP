@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeBuddy Assistant</title>
+    <link rel="stylesheet" href="webview.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js/styles/github.css">
+    <link href='https://fonts.googleapis.com/css?family=JetBrains Mono' rel='stylesheet'>
+</head>
+<body>
+    <div id="input-div">
+        <textarea id="input" placeholder="ask me anything"></textarea>
+        <div id="input-buttons-div">
+            <button class="input-button">🧠 qwen 7B</button>
+            <button class="input-button" id="chat">⏎ chat</button>
+        </div>
+    </div>
+    <div class="response" id="response"></div>
+    <script>
+        const vscode = acquireVsCodeApi();
+        document.getElementById('chat').addEventListener('click', () => {
+            const input = document.getElementById('input').value;
+            vscode.postMessage({
+                command: 'submitPrompt',
+                text: input
+            });
+        });
+
+        window.addEventListener('message', event => {
+            const message = event.data;
+            if (message.command === 'showResponse') {
+                const responseElement = document.getElementById('response');
+                responseElement.innerHTML = message.response;
+            }
+        });
+    </script>
+</body>
+</html>
