@@ -24,7 +24,6 @@ export function activate(vscodecontext: vscode.ExtensionContext) {
 			},
 		);
 
-
 		panel.webview.html = getWebviewContent();
 
 		panel.webview.onDidReceiveMessage(async (message) => {
@@ -87,6 +86,7 @@ export function activate(vscodecontext: vscode.ExtensionContext) {
 					const contextBefore = documentContent.slice(0, cursorOffset).toString();
 					const contextAfter = documentContent.slice(cursorOffset).toString();
 					outputChannel.appendLine('Context before:' + contextBefore);
+					outputChannel.appendLine('Context after:' + contextAfter);
 					const response = await fetch("http://localhost:8000/autocomplete", {
 						method: "POST",
 						body: JSON.stringify({ context_before: contextBefore, context_after: contextAfter }),
@@ -125,7 +125,8 @@ export function activate(vscodecontext: vscode.ExtensionContext) {
 
 	// Register the command in the context subscriptions
 	vscodecontext.subscriptions.push(promptUserCommand);
-	vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, inlineCompletionProvider);
+	vscodecontext.subscriptions.push(vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, inlineCompletionProvider));
+	
 
 }
 
