@@ -16,13 +16,13 @@ button {
 .response {
     font-family: 'JetBrains Mono';
     margin-top: 20px;
-    white-space: pre-wrap;
-    padding-top: 10px;
-    font-size: 16px;
+    font-size: 14px;
 }
 
-p, h1, h2, h3, ol {
-    margin: 0;
+div.response > p, h1, h2, h3, h4, ol, ul, li {
+    margin-top: 10px;
+    margin-bottom: 0;
+    line-height: 1.6;
 }
 
 #input-div {
@@ -37,7 +37,7 @@ p, h1, h2, h3, ol {
     padding: 8px;
     border-radius: 4px;
     letter-spacing: 1px;
-    font-size: 16px;
+    font-size: 14px;
     font-family: 'JetBrains Mono';
     border: 0;
     outline: none;
@@ -70,11 +70,40 @@ p, h1, h2, h3, ol {
     background-color: var(--vscode-tab-inactiveBackground);
 }
 
+#div-copy {
+    margin-top: 10px;
+    background-color: var(--vscode-activityBar-background);
+}
+
+#copy-button {
+    margin: 0;
+    background-color: var(--vscode-activityBar-background);
+    float: right;
+    margin-top: 10px;
+    margin-right: 10px;
+    font-family: 'JetBrains Mono';
+    color: var(--vscode-foreground);
+    border-radius: 5px;
+    border-width: 0;
+    font-size: 14px;
+}
+
+#copy-button:hover {
+    background-color: var(--vscode-background);
+}
+
+pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
 /* override highlight.js config from github */
 
 .hljs {
     background: var(--vscode-tab-inactiveBackground) !important;
     border-radius: 5px;
+    border-radius: 5px; 
     padding: 10px;
 }
 

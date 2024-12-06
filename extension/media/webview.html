@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CodeBuddy Assistant</title>
     <link rel="stylesheet" href="webview.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js/styles/github.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/arduino-light.css">
     <link href='https://fonts.googleapis.com/css?family=JetBrains Mono' rel='stylesheet'>
 </head>
 <body>
@@ -34,6 +34,19 @@
                 responseElement.innerHTML = message.response;
             }
         });
+
+        function copyCode(button) {
+            const parentDiv = button.parentElement;
+            const preTag = parentDiv.nextElementSibling;
+
+            if (preTag && preTag.tagName.toLowerCase() === 'pre') {
+                navigator.clipboard.writeText(atob(preTag.getAttribute("data-code")))
+                    .then(() => {
+                        button.textContent = 'copied!';
+                        setTimeout(() => { button.textContent = 'copy'; }, 1000);
+                    })
+                    .catch(err => console.error('Failed to copy:', err));
+            }        }
     </script>
 </body>
 </html>

@@ -136,19 +136,26 @@ function renderMarkdown(markdown) {
         highlight: function (str, lang) {
             if (lang && hljs.getLanguage(lang)) {
                 try {
-                    return `<pre class="hljs language-${lang}"><code class="language-${lang}">${
+                    return `<pre class="hljs language-${lang}" data-code="${Buffer.from(str).toString('base64')}"><code class="language-${lang}">${
                         hljs.highlight(str, { language: lang, ignoreIllegals: true }).value
                     }</code></pre>`;
                 } catch (__) {
-                    return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`;
+                    return `<pre class="hljs" data-code="${Buffer.from(str).toString('base64')}"><code>${md.utils.escapeHtml(str)}</code></pre>`;
                 }
             }
 
-            return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`;
+            return `<pre class="hljs" data-code="${Buffer.from(str).toString('base64')}"><code>${md.utils.escapeHtml(str)}</code></pre>`;
         }
     });
 
-    return md.render(markdown);
+    return md.render(markdown).replace(/<pre[^>]*>([\s\S]*?)<\/pre>/g, function(m) {
+		return `
+			<div id="div-copy">
+				<button id="copy-button" onclick="copyCode(this)">copy</button>
+			</div>
+			${m}
+		`;
+	});
 }
 
 function getWebviewContent(webview, extensionUri) {
