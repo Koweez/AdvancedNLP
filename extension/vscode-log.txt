@@ -1,0 +1,12 @@
+[170228:1203/121629.669838:INFO:CONSOLE(2)] "%cElectron Security Warning (enableBlinkFeatures) font-weight: bold; This renderer process has additional "enableBlinkFeatures"
+  enabled. This exposes users of this app to some security risk. If you do not
+  need this feature, you should disable it.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.", source: node:electron/js2c/sandbox_bundle (2)
+[170228:1203/121630.152576:INFO:CONSOLE(35)] "%c INFO color: #33f Started local extension host with pid 170381.", source: vscode-file://vscode-app/usr/lib/code/out/vs/workbench/workbench.desktop.main.js (35)
+[170228:1203/121632.796159:INFO:CONSOLE(35)] "%c INFO color: #33f [perf] Render performance baseline is 23ms", source: vscode-file://vscode-app/usr/lib/code/out/vs/workbench/workbench.desktop.main.js (35)
+[170228:1203/121645.931488:INFO:CONSOLE(35)] "%c WARN color: #993 [backup tracker] suspended, ignoring unregister event file:///home/djdonpablo/Documents/SCIA_website/package.json ", source: vscode-file://vscode-app/usr/lib/code/out/vs/workbench/workbench.desktop.main.js (35)
+[170228:1203/121645.931641:INFO:CONSOLE(35)] "%c WARN color: #993 [backup tracker] suspended, ignoring unregister event file:///home/djdonpablo/Documents/SCIA_website/.next/types/package.json ", source: vscode-file://vscode-app/usr/lib/code/out/vs/workbench/workbench.desktop.main.js (35)
