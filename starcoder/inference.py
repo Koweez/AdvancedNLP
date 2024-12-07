@@ -11,14 +11,14 @@ model = AutoModelForCausalLM.from_pretrained(checkpoint, token=ACCESS_TOKEN, cac
 model.generation_config.pad_token_id = tokenizer.eos_token_id
 
 def postprocess_output(prediction):
-    txt = prediction.split('<fim_middle>')[1].split('<fim_suffix>')[0]
+    print(prediction)
+    txt = prediction.split('<|fim_middle|>')[1].split('<|fim_suffix|>')[0]
     txt = txt[:-13] # removing trailing <|endoftext|>
     return txt
 
 def fill_in(before_cursor: str, after_cursor: str, device: Optional[str | torch.device] = "cpu") -> str:
-    global model
     model.to(device)
-    input_text = f"<fim_prefix>{before_cursor}<fim_suffix>{after_cursor}<fim_middle>"
+    input_text = f"<|fim_prefix|>{before_cursor}<|fim_suffix|>{after_cursor}<|fim_middle|>"
     inputs = tokenizer(input_text, return_tensors="pt", padding=True, return_attention_mask=True)
     
     input_ids = inputs['input_ids'].to(device)

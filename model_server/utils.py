@@ -17,7 +17,7 @@ def predict(prompt: str, context: str):
     s = requests.Session()
     model = 'qwen2.5-coder:3b'
     url = 'http://localhost:11434/api/generate'
-    completePrompt = 'Here is the file I am working on: \n' + context + '\n\n' + prompt
+    completePrompt = f"Here is the file I am working on \n{context}\n\n Here is my question, answer it using the code if necessary\n {prompt}\n"
     body = {'model': model, 'prompt': completePrompt}
     resp = s.post(url, json=body, stream=True)
     for line in resp.iter_lines():
@@ -26,13 +26,16 @@ def predict(prompt: str, context: str):
 
 
 def autocomplete(before_cursor: str, after_cursor: str):
-    # s = requests.Session()
-    # model = 'qwen2.5-coder:3b'
-    # url = 'http://localhost:11434/api/generate'
-    # completePrompt = 'Complete the following code and respond with only the code completion: \n' + context
-    # body = {'model': model, 'prompt': completePrompt}
-    # resp = s.post(url, json=body, stream=True)
-    # for line in resp.iter_lines():
-    #     if line:
-    #         yield json.loads(line.decode('utf-8'))['response']
-    return fill_in(before_cursor, after_cursor)
+    s = requests.Session()
+    model = 'qwen2.5-coder:3b-base'
+    url = 'http://localhost:11434/api/generate'
+    prompt = f"<|fim_prefix|>{before_cursor}<|fim_suffix|>{after_cursor}<|fim_middle|>"
+    body = {'model': model, 'prompt': prompt}
+    resp = s.post(url, json=body, stream=True)
+    res = ''
+    for line in resp.iter_lines():
+        if line == '\n' and res != '':
+            return res
+        if line:
+            res += json.loads(line.decode('utf-8'))['response']
+    return res

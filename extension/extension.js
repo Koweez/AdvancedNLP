@@ -81,28 +81,32 @@ function activate(vscodecontext) {
 				const documentContent = document.getText();
 
 				try {
-					outputChannel.appendLine('Fetching inline completion...');
+					const cursorOffset = document.offsetAt(position);
+					const contextBefore = documentContent.slice(0, cursorOffset).toString();
+					const contextAfter = documentContent.slice(cursorOffset).toString();
+					console.log('Context before:' + contextBefore);
+					console.log('Context after:' + contextAfter);
 					const response = await fetch("http://localhost:8000/autocomplete", {
 						method: "POST",
-						body: JSON.stringify({ context: documentContent }),
+						body: JSON.stringify({ context_before: contextBefore, context_after: contextAfter }),
 						headers: {
 							"Content-Type": "application/json",
 						},
 					});
 
 					if (!response.body) {
-						throw new Error("No response body");
+						throw new Error("Failed to fetch inline completion");
 					}
 
-					let completionText = '';
-					for await (const chunk of response.body) {
-						var string = new TextDecoder().decode(chunk);
-						outputChannel.appendLine('Chunk:' + string);
-						completionText += string;
-					}
+					let completionText = await response.text();
+					completionText = completionText.replace(/\\n/g, '\n');
+					completionText = completionText.slice(1, -1);
 
 					if (completionText) {
-						outputChannel.appendLine('Completion response:' + completionText);
+						console.log('Completion text:', completionText);
+						completionText = completionText.replace(/\\n/g, '\n');
+						completionText = completionText.replace(/\\t/g, '\t');
+
 						return {
 							items: [
 								{
