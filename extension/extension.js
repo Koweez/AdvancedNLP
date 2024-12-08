@@ -3,11 +3,10 @@ const MarkdownIt = require('markdown-it');
 const hljs = require('highlight.js');
 const fs = require('fs');
 
-
 function activate(vscodecontext) {
 	console.log('Extension "codebuddy" is now active!');
-	let outputChannel = vscode.window.createOutputChannel('CodeBuddy');
-	outputChannel.appendLine('Code Buddy extension activated hehehe boy');
+	if (vscode.window.activeTextEditor)
+		{lastFileSelected = vscode.workspace.asRelativePath(vscode.window.activeTextEditor.document.fileName);}
 
 	// Register a command that prompts the user for input
 	const promptUserCommand = vscode.commands.registerCommand('codebuddy.promptUser', async () => {
@@ -21,10 +20,10 @@ function activate(vscodecontext) {
 			vscode.ViewColumn.Two,
 			{
 				enableScripts: true,
-				retainContextWhenHidden: false
+				retainContextWhenHidden: true
 			},
 		);
-
+		
 		panel.webview.html = getWebviewContent(panel.webview, vscodecontext.extensionUri);
 
 		panel.webview.onDidReceiveMessage(async (message) => {
@@ -36,17 +35,29 @@ function activate(vscodecontext) {
 					vscode.window.showInformationMessage('Please enter a valid prompt.');
 					return;
 				}
-				let documentContent = '';
 
-				const editor = vscode.window.activeTextEditor;
-				if (editor) {
-					documentContent = editor.document.getText();
+				const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+				if (!workspaceFolder) {
+					vscode.window.showErrorMessage('No workspace folder is open');
+					return;
 				}
+
+				const filenames = message.filenames;
+				const files = {};
+    			try {
+					for (const file of filenames) {
+						const filePath = vscode.Uri.file(`${workspaceFolder}/${file}`);
+						const document = await vscode.workspace.openTextDocument(filePath);
+						files[file] = document.getText();
+					}
+    			} catch (error) {
+    			    vscode.window.showErrorMessage(`Failed to open file: ${error.message}`);
+    			}
 
 				try {
 					const response = await fetch("http://localhost:8000/prompt", {
 						method: "POST",
-						body: JSON.stringify({ prompt: userPrompt, context: documentContent }),
+						body: JSON.stringify({ prompt: userPrompt, files: files }),
 						headers: {
 							"Content-Type": "application/json",
 						},
@@ -72,10 +83,36 @@ function activate(vscodecontext) {
 			}
 		});
 
+		panel.webview.onDidReceiveMessage(
+			async (message) => {
+				if (message.command === 'chooseFile') {
+					const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+					if (workspaceFolder) {
+						const files = await vscode.workspace.findFiles(
+							'**/*',
+							'**/{node_modules,.git,.pycache,dist,out,build,__pycache__}/**'
+						);
+
+						const selectedFile = await vscode.window.showQuickPick(
+							files.map(file => file.fsPath.replace(workspaceFolder, '').substring(1)),
+							{ placeHolder: 'Select a file from your project' }
+						);
+						if (typeof selectedFile !== "undefined") {
+							panel.webview.postMessage({
+								command: 'contextFile',
+								fileName: selectedFile
+							});
+						}
+					} else {
+						vscode.window.showErrorMessage('No workspace folder is open');
+					}
+				}
+			}
+		);
 	});
 
 	const inlineCompletionProvider = {
-		async provideInlineCompletionItems(document, position, context, token) {
+		async provideInlineCompletionItems(document, position, context) {
 			// Only send context when the user is actively typing
 			if (context.triggerKind === vscode.InlineCompletionTriggerKind.Automatic) {
 				const documentContent = document.getText();
@@ -124,14 +161,14 @@ function activate(vscodecontext) {
 	// Register the command in the context subscriptions
 	vscodecontext.subscriptions.push(promptUserCommand);
 	vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, inlineCompletionProvider);
-
 }
+
 
 function renderMarkdown(markdown) {
     const md = new MarkdownIt({
-        html: true,          // Allow HTML tags in Markdown
-        linkify: true,       // Convert links to clickable URLs
-        typographer: true,   // Enable typographic features
+        html: true,
+        linkify: true,
+        typographer: true,
         
         highlight: function (str, lang) {
             if (lang && hljs.getLanguage(lang)) {
@@ -158,6 +195,7 @@ function renderMarkdown(markdown) {
 	});
 }
 
+
 function getWebviewContent(webview, extensionUri) {
     const htmlPath = vscode.Uri.joinPath(extensionUri, 'media', 'webview.html');
     let html = fs.readFileSync(htmlPath.fsPath, 'utf8');
@@ -168,9 +206,11 @@ function getWebviewContent(webview, extensionUri) {
     return html;
 }
 
+
 function deactivate() {
 	console.log('Deactivated');
 }
+
 
 module.exports = {
 	activate,

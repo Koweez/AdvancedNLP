@@ -2,21 +2,21 @@ import requests
 import json
 
 from pydantic import BaseModel
+from prompts import get_prompt
 
 
 class PromptRequest(BaseModel):
     prompt: str
-    context: str
+    files: dict[str, str]
     
 class CompletionRequest(BaseModel):
     context: str
 
-def predict(prompt: str, context: str):
+def predict(prompt: str, files: dict[str, str]):
     s = requests.Session()
     model = 'qwen2.5-coder:3b'
     url = 'http://localhost:11434/api/generate'
-    completePrompt = 'Here is the file I am working on: \n' + context + '\n\n' + prompt
-    body = {'model': model, 'prompt': completePrompt}
+    body = {'model': model, 'prompt': get_prompt(prompt, files)}
     resp = s.post(url, json=body, stream=True)
     for line in resp.iter_lines():
         if line:
