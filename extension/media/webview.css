@@ -185,3 +185,21 @@ pre {
 code {
     background-color: var(--vscode-tab-inactiveBackground) !important;
 }
+#conversation-history {
+    margin-top: 20px;
+}
+details {
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+details summary {
+    font-family: 'JetBrains Mono', monospace;
+    padding: 10px;
+    cursor: pointer;
+    background-color: #f9f9f9;
+}
+.history-content {
+    padding: 10px;
+    font-family: 'JetBrains Mono', monospace;
+}
