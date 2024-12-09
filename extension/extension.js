@@ -74,6 +74,9 @@ function activate(vscodecontext) {
 
 	});
 
+	const controller = new AbortController();
+	let computingCompletion = false;
+
 	const inlineCompletionProvider = {
 		async provideInlineCompletionItems(document, position, context, token) {
 			// Only send context when the user is actively typing
@@ -81,6 +84,14 @@ function activate(vscodecontext) {
 				const documentContent = document.getText();
 
 				try {
+					if (computingCompletion) {
+						console.log('Cancelling previous request');
+						controller.abort();
+					}
+					else {
+						// Set the flag to true to indicate that a request is in progress
+						computingCompletion = true;
+					}
 					const cursorOffset = document.offsetAt(position);
 					const contextBefore = documentContent.slice(0, cursorOffset).toString();
 					const contextAfter = documentContent.slice(cursorOffset).toString();
@@ -92,11 +103,14 @@ function activate(vscodecontext) {
 						headers: {
 							"Content-Type": "application/json",
 						},
+						signal: controller.signal
 					});
 
 					if (!response.body) {
 						throw new Error("Failed to fetch inline completion");
 					}
+
+					computingCompletion = false; // request is complete, reset the flag
 
 					let completionText = await response.text();
 					completionText = completionText.replace(/\\n/g, '\n');

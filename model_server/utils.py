@@ -1,6 +1,5 @@
 import requests
 import json
-from starcoder.inference import fill_in
 
 from pydantic import BaseModel
 
