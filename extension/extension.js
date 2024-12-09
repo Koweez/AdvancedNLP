@@ -148,14 +148,28 @@ function activate(vscodecontext) {
 	// 		return { items: [] };
 	// 	}
 	// };
+
+	const controller = new AbortController();
+
 	const inlineCompletionProvider = {
 		async provideInlineCompletionItems(document, position, context, token) {
 
-			// check if cancelation is requested
+			// token.isCancellationRequested is true if the user is typing in the prompt
+			// token.onCancellationRequested is called when the user types a space
+
+			// check if cancelation is requested: user is typing in the prompt
 			if (token.isCancellationRequested) {
 				console.log('canceled before sending');
+				controller.abort();
 				return { items: [] };
 			}
+
+			console.log('not canceled');
+
+			// console.log('not canceled, recreating controller');
+			// // reset the controller each time the user stops typing
+			// controller.abort(); // abort any ongoing request before starting a new one
+			// console.log('controller aborted');
 
 			const documentContent = document.getText();
 			const cursorOffset = document.offsetAt(position);
@@ -175,6 +189,7 @@ function activate(vscodecontext) {
 					headers: {
 						"Content-Type": "application/json",
 					},
+					signal: controller.signal
 				});
 
 				if (token.isCancellationRequested) {
