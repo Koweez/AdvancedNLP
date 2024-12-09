@@ -190,14 +190,28 @@ code {
 }
 details {
     margin-bottom: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid;
     border-radius: 4px;
+    background-color: var(--vscode-tab-inactiveBackground)
 }
 details summary {
     font-family: 'JetBrains Mono', monospace;
-    padding: 10px;
+    padding: 10px 15px;
+    text-indent: 5px;
     cursor: pointer;
-    background-color: #f9f9f9;
+}
+details > div {
+    padding: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    background-color: var(--vscode-editor-background);
+    color: var(--vscode-foreground);
+    border-radius: 4px;
+}
+.response {
+    font-family: 'JetBrains Mono';
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--vscode-foreground);
 }
 .history-content {
     padding: 10px;
