@@ -2,6 +2,7 @@ const vscode = require('vscode');
 const MarkdownIt = require('markdown-it');
 const hljs = require('highlight.js');
 const fs = require('fs');
+const { PassThrough } = require('stream');
 
 
 function activate(vscodecontext) {
@@ -74,75 +75,84 @@ function activate(vscodecontext) {
 
 	});
 
-	const controller = new AbortController();
-	let computingCompletion = false;
-
+	// const controller = new AbortController();
+	let notSent = false;
 	const inlineCompletionProvider = {
 		async provideInlineCompletionItems(document, position, context, token) {
+			console.log('token:', token);
 			// Only send context when the user is actively typing
 			if (context.triggerKind === vscode.InlineCompletionTriggerKind.Automatic) {
 				const documentContent = document.getText();
+				const cursorOffset = document.offsetAt(position);
+
+				// Extract context efficiently
+				const contextBefore = documentContent.slice(0, cursorOffset);
+				const contextAfter = documentContent.slice(cursorOffset);
+
+				
+
+				// check if the user is typing in the prompt
+				token.onCancellationRequested(() => {
+					// check if the typed char is a space
+					// if it is a space, then 
+					notSent = true;
+				})
 
 				try {
-					if (computingCompletion) {
-						console.log('Cancelling previous request');
-						controller.abort();
+					if (notSent) {
+						console.log('not sent');
+						return { items: [] };
 					}
-					else {
-						// Set the flag to true to indicate that a request is in progress
-						computingCompletion = true;
-					}
-					const cursorOffset = document.offsetAt(position);
-					const contextBefore = documentContent.slice(0, cursorOffset).toString();
-					const contextAfter = documentContent.slice(cursorOffset).toString();
-					console.log('Context before:' + contextBefore);
-					console.log('Context after:' + contextAfter);
+
+					console.log('sent');
+					// log the context with spaces and newlines
+					console.log('contextBefore:', JSON.stringify(contextBefore));
+					console.log('contextAfter:', JSON.stringify(contextAfter));
+
+					
+					// Send the request
 					const response = await fetch("http://localhost:8000/autocomplete", {
 						method: "POST",
 						body: JSON.stringify({ context_before: contextBefore, context_after: contextAfter }),
 						headers: {
 							"Content-Type": "application/json",
 						},
-						signal: controller.signal
+						// signal: controller.signal
 					});
 
-					if (!response.body) {
-						throw new Error("Failed to fetch inline completion");
+					if (!response.ok) {
+						throw new Error(`Failed to fetch inline completion: ${response.statusText}`);
 					}
 
-					computingCompletion = false; // request is complete, reset the flag
+					const completionText = await response.text();
 
-					let completionText = await response.text();
-					completionText = completionText.replace(/\\n/g, '\n');
-					completionText = completionText.slice(1, -1);
+					// Parse and format the completion text
+					const parsedCompletionText = JSON.parse(completionText);
+					const formattedCompletionText = parsedCompletionText.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
 
-					if (completionText) {
-						console.log('Completion text:', completionText);
-						completionText = completionText.replace(/\\n/g, '\n');
-						completionText = completionText.replace(/\\t/g, '\t');
-
-						return {
-							items: [
-								{
-									text: completionText,
-									range: new vscode.Range(position, position),
-									insertText: completionText
-								}
-							]
-						};
-					}
+					return {
+						items: [
+							{
+								text: formattedCompletionText,
+								range: new vscode.Range(position, position),
+								insertText: formattedCompletionText
+							}
+						]
+					};
 				} catch (error) {
 					console.error('Error fetching inline completion:', error);
+					// Consider providing user feedback, e.g., a notification or a specific error message in the editor
 				}
 			}
+
 			return { items: [] };
 		}
 	};
 
+
 	// Register the command in the context subscriptions
 	vscodecontext.subscriptions.push(promptUserCommand);
 	vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, inlineCompletionProvider);
-
 }
 
 function renderMarkdown(markdown) {

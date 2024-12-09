@@ -3,7 +3,6 @@ import json
 
 from pydantic import BaseModel
 
-
 class PromptRequest(BaseModel):
     prompt: str
     context: str
@@ -25,6 +24,9 @@ def predict(prompt: str, context: str):
 
 
 def autocomplete(before_cursor: str, after_cursor: str):
+    print(f"context before: {before_cursor}")
+    print(f"context after: {after_cursor}")
+    
     s = requests.Session()
     model = 'qwen2.5-coder:3b-base'
     url = 'http://localhost:11434/api/generate'
@@ -32,6 +34,7 @@ def autocomplete(before_cursor: str, after_cursor: str):
     body = {'model': model, 'prompt': prompt}
     resp = s.post(url, json=body, stream=True)
     res = ''
+    
     for line in resp.iter_lines():
         if line == '\n' and res != '':
             return res
