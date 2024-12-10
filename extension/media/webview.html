@@ -25,6 +25,8 @@
     <script>
         const vscode = acquireVsCodeApi();
 
+        let lastDetailsElement = null; // Keep track of the last created details element
+
         // request for chat
         document.getElementById('chat').addEventListener('click', () => {
             const input = document.getElementById('input').value;
@@ -36,6 +38,33 @@
                 const filenameElement = listItems[i].querySelector(".filename");
                 filenames.push(filenameElement.textContent)
             }
+
+            // Create details element (where all chats are stocked)
+            const responseElement = document.getElementById('response');
+            const newDetailsElement = document.createElement('details');
+            newDetailsElement.open = true;
+    
+            const summaryElement = document.createElement('summary');
+            summaryElement.textContent = filenames.length > 0 
+                ? `${input}  [${filenames.join(', ')}]` 
+                : input;
+    
+            const responseContentDiv = document.createElement('div');
+            responseContentDiv.innerHTML = `
+                <div class="loading-animation">
+                    <div class="dot dot1"></div>
+                    <div class="dot dot2"></div>
+                    <div class="dot dot3"></div>
+                </div>
+            `;
+    
+            newDetailsElement.appendChild(summaryElement);
+            newDetailsElement.appendChild(responseContentDiv);
+    
+            // Couldn't find a way to do with ID so we always take the last one created
+            lastDetailsElement = newDetailsElement;
+    
+            responseElement.insertBefore(newDetailsElement, responseElement.firstChild);
 
             vscode.postMessage({
                 command: 'submitPrompt',
@@ -53,12 +82,13 @@
         window.addEventListener('message', event => {
             const message = event.data;
             if (message.command === 'showResponse') {
-                // update the chat response
-                const responseElement = document.getElementById('response');
-                responseElement.innerHTML = message.response;
-            }
-            else if (message.command === "contextFile") {
-                // handle in context other filenames
+                if (lastDetailsElement) {
+                    const contentDiv = lastDetailsElement.querySelector('div');
+                    contentDiv.innerHTML = message.response;
+                } else {
+                    console.error('No details element found to append the response.');
+                }
+            } else if (message.command === "contextFile") {
                 const list = document.getElementById("filename-list");
                 const listItems = document.getElementsByClassName("filename-li");
                 for (let i = 0; i < listItems.length; i++) {
