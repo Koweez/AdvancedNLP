@@ -46,7 +46,7 @@
     
             const summaryElement = document.createElement('summary');
             summaryElement.textContent = filenames.length > 0 
-                ? `Context: ${filenames.join(', ')} | Input: ${input}` 
+                ? `${input}  [${filenames.join(', ')}]` 
                 : input;
     
             const responseContentDiv = document.createElement('div');
