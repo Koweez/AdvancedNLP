@@ -50,7 +50,13 @@
                 : input;
     
             const responseContentDiv = document.createElement('div');
-            responseContentDiv.innerHTML = 'Processing...';
+            responseContentDiv.innerHTML = `
+                <div class="loading-animation">
+                    <div class="dot dot1"></div>
+                    <div class="dot dot2"></div>
+                    <div class="dot dot3"></div>
+                </div>
+            `;
     
             newDetailsElement.appendChild(summaryElement);
             newDetailsElement.appendChild(responseContentDiv);

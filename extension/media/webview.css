@@ -218,3 +218,50 @@ details > div {
     padding: 10px;
     font-family: 'JetBrains Mono', monospace;
 }
+
+/* Processing in Chat */
+.loading-animation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50px;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    margin: 0 5px;
+    border-radius: 50%;
+    animation: 
+        bounce 0.5s ease-in infinite alternate,
+        colorChange 2s infinite alternate;
+}
+
+.dot1 { 
+    animation-delay: 0s; 
+}
+.dot2 { 
+    animation-delay: 0.1s; 
+}
+.dot3 { 
+    animation-delay: 0.2s; 
+}
+
+@keyframes bounce {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes colorChange {
+    0% { background-color: #FF0000; }
+    16% { background-color: #FF8C00; }
+    33% { background-color: #FFFF00; }
+    50% { background-color: #008000; }
+    66% { background-color: #0000FF; }
+    83% { background-color: #800080; }
+    100% { background-color: #FF0000; }
+}
