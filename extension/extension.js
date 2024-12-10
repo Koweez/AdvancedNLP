@@ -5,8 +5,7 @@ const fs = require('fs');
 
 function activate(vscodecontext) {
 	console.log('Extension "codebuddy" is now active!');
-	if (vscode.window.activeTextEditor)
-		{lastFileSelected = vscode.workspace.asRelativePath(vscode.window.activeTextEditor.document.fileName);}
+	if (vscode.window.activeTextEditor) { lastFileSelected = vscode.workspace.asRelativePath(vscode.window.activeTextEditor.document.fileName); }
 
 	// Register a command that prompts the user for input
 	const promptUserCommand = vscode.commands.registerCommand('codebuddy.promptUser', async () => {
@@ -23,8 +22,9 @@ function activate(vscodecontext) {
 				retainContextWhenHidden: true
 			},
 		);
-		
+
 		panel.webview.html = getWebviewContent(panel.webview, vscodecontext.extensionUri);
+
 
 		panel.webview.onDidReceiveMessage(async (message) => {
 			await vscode.commands.executeCommand('workbench.action.focusFirstEditorGroup');
@@ -44,15 +44,15 @@ function activate(vscodecontext) {
 
 				const filenames = message.filenames;
 				const files = {};
-    			try {
+				try {
 					for (const file of filenames) {
 						const filePath = vscode.Uri.file(`${workspaceFolder}/${file}`);
 						const document = await vscode.workspace.openTextDocument(filePath);
 						files[file] = document.getText();
 					}
-    			} catch (error) {
-    			    vscode.window.showErrorMessage(`Failed to open file: ${error.message}`);
-    			}
+				} catch (error) {
+					vscode.window.showErrorMessage(`Failed to open file: ${error.message}`);
+				}
 
 				try {
 					const response = await fetch("http://localhost:8000/prompt", {
@@ -83,10 +83,39 @@ function activate(vscodecontext) {
 			}
 		});
 
+		panel.webview.onDidReceiveMessage(
+			async (message) => {
+				if (message.command === 'chooseFile') {
+					const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+					if (workspaceFolder) {
+						const files = await vscode.workspace.findFiles(
+							'**/*',
+							'**/{node_modules,.git,.pycache,dist,out,build,__pycache__}/**'
+						);
+
+						const selectedFile = await vscode.window.showQuickPick(
+							files.map(file => file.fsPath.replace(workspaceFolder, '').substring(1)),
+							{ placeHolder: 'Select a file from your project' }
+						);
+						if (typeof selectedFile !== "undefined") {
+							panel.webview.postMessage({
+								command: 'contextFile',
+								fileName: selectedFile
+							});
+						}
+					} else {
+						vscode.window.showErrorMessage('No workspace folder is open');
+					}
+				}
+			}
+		);
 	});
 
+
+	let controller = null;
 	const inlineCompletionProvider = {
 		async provideInlineCompletionItems(document, position, context, token) {
+			console.log('Inline completion requested');
 			// Abort previous request if it exists
 			if (controller) {
 				controller.abort();
@@ -161,26 +190,25 @@ function activate(vscodecontext) {
 	};
 	// Register the command in the context subscriptions
 	vscodecontext.subscriptions.push(promptUserCommand);
-	vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, inlineCompletionProvider);
+	vscode.languages.registerInlineCompletionItemProvider({ pattern: '**/**' }, inlineCompletionProvider);
 }
 
 
 function renderMarkdown(markdown) {
-    const md = new MarkdownIt({
-        html: true,
-        linkify: true,
-        typographer: true,
-        
-        highlight: function (str, lang) {
-            if (lang && hljs.getLanguage(lang)) {
-                try {
-                    return `<pre class="hljs language-${lang}" data-code="${Buffer.from(str).toString('base64')}"><code class="language-${lang}">${
-                        hljs.highlight(str, { language: lang, ignoreIllegals: true }).value
-                    }</code></pre>`;
-                } catch (__) {
-                    return `<pre class="hljs" data-code="${Buffer.from(str).toString('base64')}"><code>${md.utils.escapeHtml(str)}</code></pre>`;
-                }
-            }
+	const md = new MarkdownIt({
+		html: true,
+		linkify: true,
+		typographer: true,
+
+		highlight: function (str, lang) {
+			if (lang && hljs.getLanguage(lang)) {
+				try {
+					return `<pre class="hljs language-${lang}" data-code="${Buffer.from(str).toString('base64')}"><code class="language-${lang}">${hljs.highlight(str, { language: lang, ignoreIllegals: true }).value
+						}</code></pre>`;
+				} catch (__) {
+					return `<pre class="hljs" data-code="${Buffer.from(str).toString('base64')}"><code>${md.utils.escapeHtml(str)}</code></pre>`;
+				}
+			}
 
 			return `<pre class="hljs" data-code="${Buffer.from(str).toString('base64')}"><code>${md.utils.escapeHtml(str)}</code></pre>`;
 		}
