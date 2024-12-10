@@ -11,14 +11,14 @@ async def root():
 @app.post("/prompt")
 async def get_prediction(request: PromptRequest):
     try:
-        return StreamingResponse(predict(request.prompt, request.files))
+        return StreamingResponse(predict(request.prompt, request.files), media_type="text/plain")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
     
 @app.post("/autocomplete")
 async def get_autocomplete(request: CompletionRequest):
     try:
-        return StreamingResponse(autocomplete(request.context))
+        return StreamingResponse(autocomplete(request.context), media_type="text/plain")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
 
