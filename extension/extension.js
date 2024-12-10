@@ -83,81 +83,82 @@ function activate(vscodecontext) {
 			}
 		});
 
-		panel.webview.onDidReceiveMessage(
-			async (message) => {
-				if (message.command === 'chooseFile') {
-					const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-					if (workspaceFolder) {
-						const files = await vscode.workspace.findFiles(
-							'**/*',
-							'**/{node_modules,.git,.pycache,dist,out,build,__pycache__}/**'
-						);
-
-						const selectedFile = await vscode.window.showQuickPick(
-							files.map(file => file.fsPath.replace(workspaceFolder, '').substring(1)),
-							{ placeHolder: 'Select a file from your project' }
-						);
-						if (typeof selectedFile !== "undefined") {
-							panel.webview.postMessage({
-								command: 'contextFile',
-								fileName: selectedFile
-							});
-						}
-					} else {
-						vscode.window.showErrorMessage('No workspace folder is open');
-					}
-				}
-			}
-		);
 	});
 
 	const inlineCompletionProvider = {
-		async provideInlineCompletionItems(document, position, context) {
-			// Only send context when the user is actively typing
-			if (context.triggerKind === vscode.InlineCompletionTriggerKind.Automatic) {
-				const documentContent = document.getText();
+		async provideInlineCompletionItems(document, position, context, token) {
+			// Abort previous request if it exists
+			if (controller) {
+				controller.abort();
+				console.log('Previous autocomplete request aborted');
+			}
 
-				try {
-					outputChannel.appendLine('Fetching inline completion...');
-					const response = await fetch("http://localhost:8000/autocomplete", {
-						method: "POST",
-						body: JSON.stringify({ context: documentContent }),
-						headers: {
-							"Content-Type": "application/json",
-						},
-					});
+			// Create a new AbortController for the current request
+			controller = new AbortController();
+			token.onCancellationRequested(() => {
+				controller.abort();
+				console.log('Autocomplete request cancelled');
+			});
 
-					if (!response.body) {
-						throw new Error("No response body");
+			const documentContent = document.getText();
+			const cursorOffset = document.offsetAt(position);
+
+			const contextBefore = documentContent.slice(0, cursorOffset);
+			const contextAfter = documentContent.slice(cursorOffset);
+
+			try {
+				const response = await fetch("http://localhost:8000/autocomplete", {
+					method: "POST",
+					body: JSON.stringify({ context_before: contextBefore, context_after: contextAfter }),
+					headers: {
+						"Content-Type": "application/json",
+					},
+					signal: controller.signal
+				});
+
+				if (!response.ok) {
+					throw new Error(`Failed to fetch autocomplete: ${response.statusText}`);
+				}
+
+				let completionText = '';
+				const reader = response.body.getReader();
+				const decoder = new TextDecoder('utf-8');
+
+				while (true) {
+					const { done, value } = await reader.read();
+
+					if (done) {
+						break;
 					}
 
-					let completionText = '';
-					for await (const chunk of response.body) {
-						var string = new TextDecoder().decode(chunk);
-						outputChannel.appendLine('Chunk:' + string);
-						completionText += string;
-					}
+					completionText += decoder.decode(value);
 
-					if (completionText) {
-						outputChannel.appendLine('Completion response:' + completionText);
-						return {
-							items: [
-								{
-									text: completionText,
-									range: new vscode.Range(position, position),
-									insertText: completionText
-								}
-							]
-						};
+					if (token.isCancellationRequested) {
+						controller.abort();
+						return { items: [] };
 					}
-				} catch (error) {
-					console.error('Error fetching inline completion:', error);
+				}
+
+				return {
+					items: [
+						{
+							text: completionText,
+							range: new vscode.Range(position, position),
+							insertText: completionText
+						}
+					]
+				};
+			} catch (error) {
+				if (error.name === 'AbortError') {
+					console.log('Autocomplete fetch aborted');
+				} else {
+					console.error('Error fetching autocomplete:', error);
 				}
 			}
+
 			return { items: [] };
 		}
 	};
-
 	// Register the command in the context subscriptions
 	vscodecontext.subscriptions.push(promptUserCommand);
 	vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, inlineCompletionProvider);
@@ -181,11 +182,11 @@ function renderMarkdown(markdown) {
                 }
             }
 
-            return `<pre class="hljs" data-code="${Buffer.from(str).toString('base64')}"><code>${md.utils.escapeHtml(str)}</code></pre>`;
-        }
-    });
+			return `<pre class="hljs" data-code="${Buffer.from(str).toString('base64')}"><code>${md.utils.escapeHtml(str)}</code></pre>`;
+		}
+	});
 
-    return md.render(markdown).replace(/<pre[^>]*>([\s\S]*?)<\/pre>/g, function(m) {
+	return md.render(markdown).replace(/<pre[^>]*>([\s\S]*?)<\/pre>/g, function (m) {
 		return `
 			<div id="div-copy">
 				<button id="copy-button" onclick="copyCode(this)">copy</button>
@@ -197,13 +198,13 @@ function renderMarkdown(markdown) {
 
 
 function getWebviewContent(webview, extensionUri) {
-    const htmlPath = vscode.Uri.joinPath(extensionUri, 'media', 'webview.html');
-    let html = fs.readFileSync(htmlPath.fsPath, 'utf8');
+	const htmlPath = vscode.Uri.joinPath(extensionUri, 'media', 'webview.html');
+	let html = fs.readFileSync(htmlPath.fsPath, 'utf8');
 
-    const cssPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'webview.css'));
-    html = html.replace('<link rel="stylesheet" href="webview.css">', `<link rel="stylesheet" href="${cssPath}">`);
+	const cssPath = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'webview.css'));
+	html = html.replace('<link rel="stylesheet" href="webview.css">', `<link rel="stylesheet" href="${cssPath}">`);
 
-    return html;
+	return html;
 }
 
 
