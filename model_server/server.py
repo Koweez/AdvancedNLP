@@ -11,16 +11,18 @@ async def root():
 @app.post("/prompt")
 async def get_prediction(request: PromptRequest):
     try:
-        return StreamingResponse(predict(request.prompt, request.context))
+        return StreamingResponse(predict(request.prompt, request.context), media_type="text/plain")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
     
 @app.post("/autocomplete")
 async def get_autocomplete(request: CompletionRequest):
     try:
-        return autocomplete(request.context_before, request.context_after)
+        return StreamingResponse(autocomplete(request.context_before, request.context_after), media_type="text/plain")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
