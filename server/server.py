@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
-from model_server.utils import PromptRequest, CompletionRequest, predict, autocomplete
+from utils import PromptRequest, CompletionRequest, predict, autocomplete
 
 app = FastAPI()
 
@@ -11,17 +11,16 @@ async def root():
 @app.post("/prompt")
 async def get_prediction(request: PromptRequest):
     try:
-        return StreamingResponse(predict(request.prompt, request.context), media_type="text/plain")
+        return StreamingResponse(predict(request.prompt, request.files))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
     
 @app.post("/autocomplete")
 async def get_autocomplete(request: CompletionRequest):
     try:
-        return StreamingResponse(autocomplete(request.context_before, request.context_after), media_type="text/plain")
+        return StreamingResponse(autocomplete(request.context))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
-
 
 if __name__ == "__main__":
     import uvicorn

@@ -22,11 +22,8 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src",
+    "watch": "nodemon extension.js",
+    "lint": "eslint .",
     "test": "vscode-test"
   },
   "devDependencies": {
@@ -38,7 +35,8 @@
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
     "eslint": "^9.13.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vscode": "^1.1.37"
   },
   "dependencies": {
     "@vscode/vsce": "^3.2.1",

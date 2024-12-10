@@ -2,13 +2,11 @@ const vscode = require('vscode');
 const MarkdownIt = require('markdown-it');
 const hljs = require('highlight.js');
 const fs = require('fs');
-const { PassThrough } = require('stream');
-
 
 function activate(vscodecontext) {
 	console.log('Extension "codebuddy" is now active!');
-	let outputChannel = vscode.window.createOutputChannel('CodeBuddy');
-	outputChannel.appendLine('Code Buddy extension activated hehehe boy');
+	if (vscode.window.activeTextEditor)
+		{lastFileSelected = vscode.workspace.asRelativePath(vscode.window.activeTextEditor.document.fileName);}
 
 	// Register a command that prompts the user for input
 	const promptUserCommand = vscode.commands.registerCommand('codebuddy.promptUser', async () => {
@@ -22,10 +20,10 @@ function activate(vscodecontext) {
 			vscode.ViewColumn.Two,
 			{
 				enableScripts: true,
-				retainContextWhenHidden: false
+				retainContextWhenHidden: true
 			},
 		);
-
+		
 		panel.webview.html = getWebviewContent(panel.webview, vscodecontext.extensionUri);
 
 		panel.webview.onDidReceiveMessage(async (message) => {
@@ -37,17 +35,29 @@ function activate(vscodecontext) {
 					vscode.window.showInformationMessage('Please enter a valid prompt.');
 					return;
 				}
-				let documentContent = '';
 
-				const editor = vscode.window.activeTextEditor;
-				if (editor) {
-					documentContent = editor.document.getText();
+				const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+				if (!workspaceFolder) {
+					vscode.window.showErrorMessage('No workspace folder is open');
+					return;
 				}
+
+				const filenames = message.filenames;
+				const files = {};
+    			try {
+					for (const file of filenames) {
+						const filePath = vscode.Uri.file(`${workspaceFolder}/${file}`);
+						const document = await vscode.workspace.openTextDocument(filePath);
+						files[file] = document.getText();
+					}
+    			} catch (error) {
+    			    vscode.window.showErrorMessage(`Failed to open file: ${error.message}`);
+    			}
 
 				try {
 					const response = await fetch("http://localhost:8000/prompt", {
 						method: "POST",
-						body: JSON.stringify({ prompt: userPrompt, context: documentContent }),
+						body: JSON.stringify({ prompt: userPrompt, files: files }),
 						headers: {
 							"Content-Type": "application/json",
 						},
@@ -74,8 +84,6 @@ function activate(vscodecontext) {
 		});
 
 	});
-
-	let controller = null;
 
 	const inlineCompletionProvider = {
 		async provideInlineCompletionItems(document, position, context, token) {
@@ -156,21 +164,23 @@ function activate(vscodecontext) {
 	vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, inlineCompletionProvider);
 }
 
-function renderMarkdown(markdown) {
-	const md = new MarkdownIt({
-		html: true,          // Allow HTML tags in Markdown
-		linkify: true,       // Convert links to clickable URLs
-		typographer: true,   // Enable typographic features
 
-		highlight: function (str, lang) {
-			if (lang && hljs.getLanguage(lang)) {
-				try {
-					return `<pre class="hljs language-${lang}" data-code="${Buffer.from(str).toString('base64')}"><code class="language-${lang}">${hljs.highlight(str, { language: lang, ignoreIllegals: true }).value
-						}</code></pre>`;
-				} catch (__) {
-					return `<pre class="hljs" data-code="${Buffer.from(str).toString('base64')}"><code>${md.utils.escapeHtml(str)}</code></pre>`;
-				}
-			}
+function renderMarkdown(markdown) {
+    const md = new MarkdownIt({
+        html: true,
+        linkify: true,
+        typographer: true,
+        
+        highlight: function (str, lang) {
+            if (lang && hljs.getLanguage(lang)) {
+                try {
+                    return `<pre class="hljs language-${lang}" data-code="${Buffer.from(str).toString('base64')}"><code class="language-${lang}">${
+                        hljs.highlight(str, { language: lang, ignoreIllegals: true }).value
+                    }</code></pre>`;
+                } catch (__) {
+                    return `<pre class="hljs" data-code="${Buffer.from(str).toString('base64')}"><code>${md.utils.escapeHtml(str)}</code></pre>`;
+                }
+            }
 
 			return `<pre class="hljs" data-code="${Buffer.from(str).toString('base64')}"><code>${md.utils.escapeHtml(str)}</code></pre>`;
 		}
@@ -186,6 +196,7 @@ function renderMarkdown(markdown) {
 	});
 }
 
+
 function getWebviewContent(webview, extensionUri) {
 	const htmlPath = vscode.Uri.joinPath(extensionUri, 'media', 'webview.html');
 	let html = fs.readFileSync(htmlPath.fsPath, 'utf8');
@@ -196,9 +207,11 @@ function getWebviewContent(webview, extensionUri) {
 	return html;
 }
 
+
 function deactivate() {
 	console.log('Deactivated');
 }
+
 
 module.exports = {
 	activate,

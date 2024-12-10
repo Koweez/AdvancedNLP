@@ -79,8 +79,8 @@ div.response > p, h1, h2, h3, h4, ol, ul, li {
     margin: 0;
     background-color: var(--vscode-activityBar-background);
     float: right;
-    margin-top: 10px;
-    margin-right: 10px;
+    margin-top: 5px;
+    margin-right: 5px;
     font-family: 'JetBrains Mono';
     color: var(--vscode-foreground);
     border-radius: 5px;
@@ -98,7 +98,82 @@ pre {
     word-wrap: break-word;
 }
 
-/* override highlight.js config from github */
+#add-file {
+    font-family: 'JetBrains Mono';
+    font-size: 20px;
+    margin-top: 0;
+    margin-left: 10px;
+    width: 30px;
+    height: 30px; 
+    padding: 0;
+    margin-top: auto;
+    margin-bottom: auto;
+    border-radius: 3px;
+    border: none;
+    display: flex; /* Center the content inside */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    background-color: var(--vscode-activityBar-background);
+    color: var(--vscode-foreground);
+}
+
+#add-file:hover {
+    font-size: 24px;
+    transition: font-size 0.1s ease-in-out; 
+}
+
+#filename-list {
+    list-style-type: none;
+    margin: 0;
+    padding-left: 0;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.minus-file {
+    font-family: 'JetBrains Mono';
+    font-size: 22px;
+    margin: 0;
+    padding: 0;
+    width: 22px;
+    height: 22px; 
+    border-radius: 3px;
+    border: none;
+    background-color: var(--vscode-activityBar-background);
+    color: var(--vscode-foreground);
+    margin-left: 10px;
+    display: flex; /* Center the content inside */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+}
+
+.minus-file:hover {
+    font-size: 24px;
+    transition: font-size 0.1s ease-in-out; 
+}
+
+.filename-li {
+    display: flex;
+    font-family: 'JetBrains Mono';
+    color: var(--vscode-foreground);
+    background-color: var(--vscode-background);
+    border: 1px solid;
+    border-color: var(--vscode-activityBar-background);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px 6px 12px;
+    border-radius: 4px;
+    margin-top: 0;
+}
+
+.filename {
+    margin: 0;
+    line-height: 1;
+    align-self: center;
+}
+
+/* override highlight.js config */
 
 .hljs {
     background: var(--vscode-tab-inactiveBackground) !important;

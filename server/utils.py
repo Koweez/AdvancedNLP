@@ -3,10 +3,11 @@ import aiohttp
 import json
 
 from pydantic import BaseModel
+from prompts import get_prompt
 
 class PromptRequest(BaseModel):
     prompt: str
-    context: str
+    files: dict[str, str]
     
 class CompletionRequest(BaseModel):
     context_before: str
@@ -17,7 +18,7 @@ predict_generator = None
 autocomplete_session = None
 autocomplete_generator = None
 
-async def predict(prompt: str, context: str):
+async def predict(prompt: str, files: dict[str, str]):
     global predict_session
     global predict_generator
     
@@ -31,11 +32,7 @@ async def predict(prompt: str, context: str):
         
     model = 'qwen2.5-coder:3b'
     url = 'http://localhost:11434/api/generate'
-    completePrompt = (
-        f"Here is the file I am working on \n{context}\n\n"
-        f"Here is my question, answer it using the code if necessary\n {prompt}\n"
-    )
-    body = {'model': model, 'prompt': completePrompt}
+    body = {'model': model, 'prompt': get_prompt(prompt=prompt, files=files)}
     
     async def fetch():
         async with predict_session.post(url, json=body) as resp:
