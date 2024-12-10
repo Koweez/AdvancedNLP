@@ -26,10 +26,12 @@ function activate(vscodecontext) {
 		panel.webview.html = getWebviewContent(panel.webview, vscodecontext.extensionUri);
 
 
+		let promptController = null;
 		panel.webview.onDidReceiveMessage(async (message) => {
 			await vscode.commands.executeCommand('workbench.action.focusFirstEditorGroup');
 
 			if (message.command === 'submitPrompt') {
+
 				const userPrompt = message.text;
 				if (userPrompt.trim() === '') {
 					vscode.window.showInformationMessage('Please enter a valid prompt.');
@@ -54,6 +56,15 @@ function activate(vscodecontext) {
 					vscode.window.showErrorMessage(`Failed to open file: ${error.message}`);
 				}
 
+				if (promptController) {
+					promptController.abort();
+					console.log('Previous prompt request aborted');
+				}
+
+				promptController = new AbortController();
+				const { signal } = promptController;
+				// remove the content of the webview
+
 				try {
 					const response = await fetch("http://localhost:8000/prompt", {
 						method: "POST",
@@ -61,6 +72,7 @@ function activate(vscodecontext) {
 						headers: {
 							"Content-Type": "application/json",
 						},
+						signal
 					});
 
 					if (!response.body) {
@@ -68,15 +80,35 @@ function activate(vscodecontext) {
 					}
 
 					let content = '';
-					for await (const chunk of response.body) {
-						content += new TextDecoder().decode(chunk);
+					const reader = response.body.getReader();
+					const decoder = new TextDecoder('utf-8');
+
+					while (true) {
+						const { done, value } = await reader.read();
+
+						if (done) {
+							break;
+						}
+
+						content += decoder.decode(value);
+
+						// Send the updated content to the webview
 						panel.webview.postMessage({
 							command: 'showResponse',
 							response: renderMarkdown(content)
 						});
+
+						// Check if the request was aborted
+						if (signal.aborted) {
+							console.log('Fetch aborted by user');
+							break;
+						}
 					}
 
 				} catch (error) {
+					if (error.name === 'AbortError') {
+						console.log('Prompt fetch aborted');
+					}
 					console.error('Error receiving streaming response:', error);
 					vscode.window.showErrorMessage('Failed to connect to the server. Please check your server and try again.');
 				}
