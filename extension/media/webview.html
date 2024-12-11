@@ -26,6 +26,7 @@
         const vscode = acquireVsCodeApi();
 
         let lastDetailsElement = null; // Keep track of the last created details element
+        let penultimateDetailsElement = null; // Keep track of the second last created details element
 
         // request for chat
         document.getElementById('chat').addEventListener('click', () => {
@@ -62,6 +63,7 @@
             newDetailsElement.appendChild(responseContentDiv);
     
             // Couldn't find a way to do with ID so we always take the last one created
+            penultimateDetailsElement = lastDetailsElement;
             lastDetailsElement = newDetailsElement;
     
             responseElement.insertBefore(newDetailsElement, responseElement.firstChild);
@@ -81,6 +83,9 @@
         // handle message from vscode
         window.addEventListener('message', event => {
             const message = event.data;
+            if (message.command == 'abort') {
+                penultimateDetailsElement.remove()
+            }
             if (message.command === 'showResponse') {
                 if (lastDetailsElement) {
                     const contentDiv = lastDetailsElement.querySelector('div');

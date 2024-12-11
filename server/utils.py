@@ -37,8 +37,11 @@ async def predict(prompt: str, files: dict[str, str]):
     async def fetch():
         async with predict_session.post(url, json=body) as resp:
             async for line in resp.content:
-                if line:
-                    yield json.loads(line.decode('utf-8'))['response']
+                try:
+                    if line:
+                        yield json.loads(line.decode('utf-8'))['response']
+                except asyncio.CancelledError:
+                    print("Prediction task cancelled")
     
     predict_generator = fetch()
     try:

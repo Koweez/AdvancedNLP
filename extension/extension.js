@@ -58,6 +58,9 @@ function activate(vscodecontext) {
 
 				if (promptController) {
 					promptController.abort();
+					panel.webview.postMessage({
+						command: 'abort',
+					});
 					console.log('Previous prompt request aborted');
 				}
 

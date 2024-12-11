@@ -197,7 +197,6 @@ details {
 details summary {
     font-family: 'JetBrains Mono', monospace;
     padding: 10px 15px;
-    text-indent: 5px;
     font-weight: bold;
     cursor: pointer;
 }
