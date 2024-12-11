@@ -1,6 +1,7 @@
 import asyncio
 import aiohttp
 import json
+import os
 
 from pydantic import BaseModel
 from prompts import get_prompt
@@ -18,6 +19,12 @@ predict_generator = None
 autocomplete_session = None
 autocomplete_generator = None
 
+def get_url():
+    if os.environ.get('OLLAMA_SERVER_URL'):
+        return os.environ.get('OLLAMA_SERVER_URL') + '/api/generate'
+    else:
+        return 'http://localhost:11434/api/generate'
+
 async def predict(prompt: str, files: dict[str, str]):
     global predict_session
     global predict_generator
@@ -30,8 +37,12 @@ async def predict(prompt: str, files: dict[str, str]):
         predict_session = aiohttp.ClientSession()
         
         
+    # check if inside docker container with the OLLAMA_SERVER_URL environment variable
+    # if not, use localhost
+    
+    url = get_url()
+    
     model = 'qwen2.5-coder:3b'
-    url = 'http://localhost:11434/api/generate'
     body = {'model': model, 'prompt': get_prompt(prompt=prompt, files=files)}
     
     async def fetch():
@@ -62,7 +73,7 @@ async def autocomplete(before_cursor: str, after_cursor: str):
         autocomplete_session = aiohttp.ClientSession()
         
     model = 'qwen2.5-coder:3b-base'
-    url = 'http://localhost:11434/api/generate'
+    url = get_url()
     prompt = f"{before_cursor}<|fim_suffix|>{after_cursor}"
     body = {'model': model, 'prompt': prompt}
 
