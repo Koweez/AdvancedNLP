@@ -28,3 +28,12 @@ services:
         curl http://ollama:11434/api/generate -d '{"model": "qwen2.5-coder:3b"}'
         curl http://ollama:11434/api/pull -d '{"name": "qwen2.5-coder:3b-base"}'
         curl http://ollama:11434/api/generate -d '{"model": "qwen2.5-coder:3b-base"}'
+
+  server:
+    build: ./server/
+    ports:
+      - "8000:8000"
+    depends_on:
+      - extension
+      - ollama
+      - ollama-setup
