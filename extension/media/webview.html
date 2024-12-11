@@ -26,10 +26,14 @@
         const vscode = acquireVsCodeApi();
 
         let lastDetailsElement = null; // Keep track of the last created details element
-        let penultimateDetailsElement = null; // Keep track of the second last created details element
 
         // request for chat
         document.getElementById('chat').addEventListener('click', () => {
+
+        const chat = document.getElementById('chat');
+        if (chat.innerHTML === "⏎ chat")
+        {
+            chat.innerHTML = "cancel";
             const input = document.getElementById('input').value;
 
             const list = document.getElementById("filename-list");
@@ -44,12 +48,12 @@
             const responseElement = document.getElementById('response');
             const newDetailsElement = document.createElement('details');
             newDetailsElement.open = true;
-    
+
             const summaryElement = document.createElement('summary');
             summaryElement.textContent = filenames.length > 0 
                 ? `${input}  [${filenames.join(', ')}]` 
                 : input;
-    
+
             const responseContentDiv = document.createElement('div');
             responseContentDiv.innerHTML = `
                 <div class="loading-animation">
@@ -58,14 +62,13 @@
                     <div class="dot dot3"></div>
                 </div>
             `;
-    
+
             newDetailsElement.appendChild(summaryElement);
             newDetailsElement.appendChild(responseContentDiv);
-    
+
             // Couldn't find a way to do with ID so we always take the last one created
-            penultimateDetailsElement = lastDetailsElement;
             lastDetailsElement = newDetailsElement;
-    
+
             responseElement.insertBefore(newDetailsElement, responseElement.firstChild);
 
             vscode.postMessage({
@@ -73,6 +76,12 @@
                 text: input,
                 filenames: filenames
             });
+        }
+        else {
+            chat.innerHTML = "⏎ chat";
+            let firstChild = document.getElementById("response").firstChild
+            firstChild.remove();
+        }
         });
 
         // event listener to add a file to the context (other current one)
@@ -83,8 +92,9 @@
         // handle message from vscode
         window.addEventListener('message', event => {
             const message = event.data;
-            if (message.command == 'abort') {
-                penultimateDetailsElement.remove()
+            const button = document.getElementById('chat')
+            if (message.command === "ending"){
+                button.innerHTML = "⏎ chat";
             }
             if (message.command === 'showResponse') {
                 if (lastDetailsElement) {

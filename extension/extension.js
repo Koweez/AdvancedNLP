@@ -29,7 +29,13 @@ function activate(vscodecontext) {
 		let promptController = null;
 		panel.webview.onDidReceiveMessage(async (message) => {
 			await vscode.commands.executeCommand('workbench.action.focusFirstEditorGroup');
-
+			if (message.command === 'abort'){
+				if (promptController){
+					promptController.abort();
+					console.log('Previous prompt request aborted');
+				}
+				return;
+			}
 			if (message.command === 'submitPrompt') {
 
 				const userPrompt = message.text;
@@ -107,6 +113,11 @@ function activate(vscodecontext) {
 							break;
 						}
 					}
+
+					panel.webview.postMessage({
+						command: 'ending',
+						response: renderMarkdown(content)
+					});
 
 				} catch (error) {
 					if (error.name === 'AbortError') {

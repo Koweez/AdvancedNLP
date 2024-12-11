@@ -40,14 +40,14 @@ async def predict(prompt: str, files: dict[str, str]):
                 try:
                     if line:
                         yield json.loads(line.decode('utf-8'))['response']
-                except asyncio.CancelledError:
+                except:
                     print("Prediction task cancelled")
     
     predict_generator = fetch()
     try:
         async for response in predict_generator:
             yield response
-    except asyncio.CancelledError:
+    except:
         print("Prediction task cancelled")
 
 
