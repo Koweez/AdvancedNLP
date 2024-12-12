@@ -109,8 +109,10 @@ function activate(vscodecontext) {
 					if (error.name === 'AbortError') {
 						console.log('Prompt fetch aborted');
 					}
-					console.error('Error receiving streaming response:', error);
-					vscode.window.showErrorMessage('Failed to connect to the server. Please check your server and try again.');
+					else {
+						console.error('Error receiving streaming response:', error);
+						vscode.window.showErrorMessage('Failed to connect to the server. Please check your server and try again.');
+					}
 				}
 			}
 		});
