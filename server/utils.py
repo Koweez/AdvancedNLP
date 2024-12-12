@@ -2,6 +2,8 @@ import asyncio
 import aiohttp
 import json
 import os
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
 
 from pydantic import BaseModel
 from prompts import get_prompt
@@ -16,8 +18,7 @@ class CompletionRequest(BaseModel):
     
 predict_session = None
 predict_generator = None
-autocomplete_session = None
-autocomplete_generator = None
+autocomplete_task = None
 
 def get_url():
     if os.environ.get('OLLAMA_SERVER_URL'):
@@ -55,41 +56,46 @@ async def predict(prompt: str, files: dict[str, str]):
     try:
         async for response in predict_generator:
             yield response
-    except asyncio.CancelledError:
+    except:
         print("Prediction task cancelled")
 
+def load_model():
+    model_checkpoint = "Qwen/Qwen2.5-Coder-3B"
+    assistant_checkpoint = "Qwen/Qwen2.5-Coder-0.5B"
 
-async def autocomplete(before_cursor: str, after_cursor: str):
-    global autocomplete_session
-    global autocomplete_generator
-    
-    print(f"first: {before_cursor}, second: {after_cursor}")
-    
-    if autocomplete_generator:
-        autocomplete_generator.aclose()
-        print("Previous autocomplete task cancelled")
-        
-    if not autocomplete_session:
-        autocomplete_session = aiohttp.ClientSession()
-        
-    model = 'qwen2.5-coder:3b-base'
-    url = get_url()
-    prompt = f"{before_cursor}<|fim_suffix|>{after_cursor}"
-    body = {'model': model, 'prompt': prompt}
+    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint, cache_dir='/home/koweez/models_cache/qwen2.5-coder-3b-instruct/')
+    tokenizer.pad_token = tokenizer.eos_token
+    model = AutoModelForCausalLM.from_pretrained(
+        model_checkpoint,
+        torch_dtype="auto",
+        device_map="auto",
+        cache_dir='/home/koweez/models_cache/qwen2.5-coder-3b/'
+    )
+    model.generation_config.pad_token_id = tokenizer.eos_token_id
 
-    async def fetch():
-        async with autocomplete_session.post(url, json=body) as resp:
-            async for line in resp.content:
-                if line:
-                    yield json.loads(line.decode('utf-8'))['response']
+    assistant_model = AutoModelForCausalLM.from_pretrained(
+        assistant_checkpoint,
+        torch_dtype="auto",
+        device_map="auto",
+        cache_dir='/home/koweez/models_cache/qwen2.5-coder-0.5b/'
+    )
+    assistant_model.generation_config.pad_token_id = tokenizer.eos_token_id
+    return tokenizer, model, assistant_model
 
-    autocomplete_generator = fetch()
-    middle_passed = False
+async def inference(tokenizer, model, assistant_model, before_context:str, after_context:str, device:str) -> str:
+    prompt = f"<|fim_prefix|>{before_context}\n<|fim_suffix|>{after_context}\n<|fim_middle|>"
+    model_inputs = tokenizer(prompt, return_tensors="pt", padding=True, return_attention_mask=True)
+    input_ids = model_inputs["input_ids"].to(device)
+    attention_mask = model_inputs["attention_mask"].to(device)
     try:
-        async for response in autocomplete_generator:
-            if middle_passed:
-                yield response
-            if "<|fim_middle|>" in response:
-                middle_passed = True
-    except asyncio.CancelledError:
-        print("Autocomplete task was cancelled")
+        outputs = model.generate(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            assistant_model=assistant_model,
+            max_new_tokens=512
+        )
+        response = tokenizer.decode(outputs[0])
+        response = response.split("<|fim_middle|>")[1].split("\n<|endoftext|>")[0]
+        return response
+    except:
+        print("Inference task cancelled")

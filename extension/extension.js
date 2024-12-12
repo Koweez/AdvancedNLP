@@ -181,23 +181,12 @@ function activate(vscodecontext) {
 					throw new Error(`Failed to fetch autocomplete: ${response.statusText}`);
 				}
 
-				let completionText = '';
-				const reader = response.body.getReader();
-				const decoder = new TextDecoder('utf-8');
+				let completionText = await response.text();
+				completionText = completionText.slice(1, -1);
 
-				while (true) {
-					const { done, value } = await reader.read();
-
-					if (done) {
-						break;
-					}
-
-					completionText += decoder.decode(value);
-
-					if (token.isCancellationRequested) {
-						controller.abort();
-						return { items: [] };
-					}
+				if (token.isCancellationRequested) {
+					controller.abort();
+					return { items: [] };
 				}
 
 				return {
