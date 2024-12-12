@@ -183,6 +183,9 @@ function activate(vscodecontext) {
 
 				let completionText = await response.text();
 				completionText = completionText.slice(1, -1);
+				completionText = completionText.replace(/\\n/g, '\n');
+				completionText = completionText.replace(/\\t/g, '\t');
+				completionText = completionText.replace(/\\r/g, '\r');
 
 				if (token.isCancellationRequested) {
 					controller.abort();

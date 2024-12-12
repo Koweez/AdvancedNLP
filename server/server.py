@@ -30,7 +30,7 @@ async def get_autocomplete(request: CompletionRequest):
         autocomplete_task.cancel()
         try:
             await autocomplete_task
-        except:
+        except asyncio.CancelledError:
             print("Previous autocomplete task cancelled")
             
     autocomplete_task = asyncio.create_task(
@@ -40,6 +40,9 @@ async def get_autocomplete(request: CompletionRequest):
     try:
         result = await autocomplete_task
         return result
+    except asyncio.CancelledError:
+        print("Current autocomplete task cancelled")
+        raise HTTPException(status_code=500, detail="Autocomplete task cancelled")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
 

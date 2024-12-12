@@ -95,7 +95,8 @@ async def inference(tokenizer, model, assistant_model, before_context:str, after
             max_new_tokens=512
         )
         response = tokenizer.decode(outputs[0])
-        response = response.split("<|fim_middle|>")[1].split("\n<|endoftext|>")[0]
+        response = response.split("<|fim_middle|>")[1][:-13]
         return response
-    except:
+    except asyncio.CancelledError:
         print("Inference task cancelled")
+        raise
