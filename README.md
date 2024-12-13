@@ -17,7 +17,7 @@ This repository contains our project for the Advanced NLP course at EPITA.
 - **/server**:
   - *server.py*: handle extension requests.
   - *prompts.py*: define the different prompts context.
-  - *utils.py*: everything related to speculative decoding.
+  - *utils.py*: everything related to speculative decoding and getting the results from ollama
 
 ## Implementation
 
@@ -40,5 +40,6 @@ This repository contains our project for the Advanced NLP course at EPITA.
 
 ```
 ~$ docker compose up
+~$ python server/server.py
 ~$ firefox localhost:8080
 ```
