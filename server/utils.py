@@ -63,13 +63,13 @@ def load_model():
     model_checkpoint = "Qwen/Qwen2.5-Coder-3B"
     assistant_checkpoint = "Qwen/Qwen2.5-Coder-0.5B"
 
-    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint, cache_dir='/home/koweez/models_cache/qwen2.5-coder-3b-instruct/')
+    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint, cache_dir='/home/djdonpablo/models_cache/qwen2.5-coder-3b-instruct/')
     tokenizer.pad_token = tokenizer.eos_token
     model = AutoModelForCausalLM.from_pretrained(
         model_checkpoint,
         torch_dtype="auto",
         device_map="auto",
-        cache_dir='/home/koweez/models_cache/qwen2.5-coder-3b/'
+        cache_dir='/home/djdonpablo/models_cache/qwen2.5-coder-3b/'
     )
     model.generation_config.pad_token_id = tokenizer.eos_token_id
 
@@ -77,7 +77,7 @@ def load_model():
         assistant_checkpoint,
         torch_dtype="auto",
         device_map="auto",
-        cache_dir='/home/koweez/models_cache/qwen2.5-coder-0.5b/'
+        cache_dir='/home/djdonpablo/models_cache/qwen2.5-coder-0.5b/'
     )
     assistant_model.generation_config.pad_token_id = tokenizer.eos_token_id
     return tokenizer, model, assistant_model

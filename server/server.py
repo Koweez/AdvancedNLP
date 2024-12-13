@@ -34,7 +34,7 @@ async def get_autocomplete(request: CompletionRequest):
             print("Previous autocomplete task cancelled")
             
     autocomplete_task = asyncio.create_task(
-        inference(tokenizer, model, assistant_model, request.context_before, request.context_after, "cuda")
+        inference(tokenizer, model, assistant_model, request.context_before, request.context_after, "cpu")
     )
     
     try:
