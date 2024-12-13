@@ -1,6 +1,6 @@
 # CodeBuddy
 
-![alt text](https://github.com/Koweez/AdvancedNLP/logo.png)
+![logo|100](https://github.com/Koweez/AdvancedNLP/blob/main/logo.png)
 
 This repository contains our project for the Advanced NLP course at EPITA.
 
